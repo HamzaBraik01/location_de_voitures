@@ -32,9 +32,7 @@
                         <a href="#" class="text-white hover:text-cyan-400 transition-colors">Véhicules</a>
                         <a href="#" class="text-white hover:text-cyan-400 transition-colors">Catégories</a>
                         <a href="#" class="text-white hover:text-cyan-400 transition-colors">Contact</a>
-                        <button class="bg-cyan-400 text-white px-6 py-2 rounded-full hover:bg-cyan-300 transition-colors">
-                            Connexion
-                        </button>
+                        <a href="./pages/login.php" class="bg-cyan-400 text-white px-6 py-2 rounded-full hover:bg-cyan-500 transition-colors">Connexion</a>
                     </div>
 
                     <!-- Mobile Menu Button -->
@@ -54,9 +52,7 @@
                 <a href="#" class="block px-4 py-2 text-gray-600 hover:bg-gray-100">Catégories</a>
                 <a href="#" class="block px-4 py-2 text-gray-600 hover:bg-gray-100">Contact</a>
                 <div class="px-4 py-2">
-                    <button class="w-full bg-green-600 text-white px-4 py-2 rounded-full hover:bg-green-700">
-                        Connexion
-                    </button>
+                    <a href="./pages/login.php" class="w-full bg-cyan-400 text-white px-4 py-2 rounded-full hover:bg-cyan-500">Connexion</a>
                 </div>
             </div>
         </nav>
@@ -395,7 +391,7 @@
             <div class="border-t border-gray-800 mt-12 pt-8">
                 <div class="flex flex-col md:flex-row justify-between items-center">
                     <p class="text-gray-400 text-sm mb-4 md:mb-0">
-                        © 2024 Drive & Loc. Tous droits réservés.
+                        © 2024 AutoMove. Tous droits réservés.
                     </p>
                     <div class="flex space-x-6">
                         <a href="#" class="text-gray-400 hover:text-white text-sm">Mentions légales</a>

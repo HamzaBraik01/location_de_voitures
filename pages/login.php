@@ -50,7 +50,7 @@
             <div class="mt-6 text-center">
                 <p class="text-gray-600 text-sm sm:text-base">
                     Don't have an account?
-                    <a href="signup.html" class="text-cyan-500 font-bold hover:text-cyan-800">
+                    <a href="signup.php" class="text-cyan-500 font-bold hover:text-cyan-800">
                         Create an Account
                     </a>
                 </p>

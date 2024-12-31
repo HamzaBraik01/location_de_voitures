@@ -56,7 +56,7 @@
                         type="submit">
                         Sign Up
                     </button>
-                    <a href="#"
+                    <a href="login.php"
                         class="inline-block mt-4 sm:mt-0 sm:ml-4 font-bold text-sm text-cyan-500 hover:text-cyan-800">
                         Already have an account?
                     </a>
