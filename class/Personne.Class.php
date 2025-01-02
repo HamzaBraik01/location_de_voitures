@@ -35,7 +35,6 @@ class Personne {
     }
 
     public static function getByEmail($email) {
-        // Code to fetch a person by email from the database
     }
 }
 

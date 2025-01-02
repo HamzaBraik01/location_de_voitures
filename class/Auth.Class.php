@@ -1,5 +1,5 @@
 <?php
-require_once '../config/DatabaseConnection.php';
+require_once 'DatabaseConnection.php';
 
 class Auth {
     private $pdo;
@@ -83,7 +83,6 @@ class Auth {
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':motDePasse', $hashedPassword);
         $stmt->bindParam(':roleId', $roleId);
-
         return $stmt->execute();
     }
 }

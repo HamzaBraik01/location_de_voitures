@@ -67,3 +67,5 @@ CREATE TABLE Avis (
     FOREIGN KEY (clientId) REFERENCES Client(id) ON DELETE CASCADE,
     FOREIGN KEY (vehiculeId) REFERENCES Vehicule(id) ON DELETE CASCADE
 );
+
+INSERT INTO `role`(`id`, `nom`) VALUES (1,'admin'),(2,'client');
