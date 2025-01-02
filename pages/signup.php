@@ -64,7 +64,6 @@
 
 </html>
 <?php
-require_once '../class/DatabaseConnection.php';
 require_once '../class/Auth.Class.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
