@@ -2,32 +2,23 @@
 require_once '../class/DatabaseConnection.php';
 $db = new Database();
 $pdo = $db->getConnection();
-
-function getTotalReservations($pdo) {
-    $query = "SELECT COUNT(*) as total FROM reservation";
-    $result = $pdo->query($query);
-    return $result->fetch()['total'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Suppression
+    if (isset($_POST['delete']) && isset($_POST['reservation_id'])) {
+        $stmt = $pdo->prepare("DELETE FROM reservation WHERE id = ?");
+        $stmt->execute([$_POST['reservation_id']]);
+        header('Location: AdminReservations.php');
+        exit;
+    }
+    
+    if (isset($_POST['update_status']) && isset($_POST['reservation_id']) && isset($_POST['statut'])) {
+        $stmt = $pdo->prepare("UPDATE reservation SET statut = ? WHERE id = ?");
+        $stmt->execute([$_POST['statut'], $_POST['reservation_id']]);
+        header('Location: AdminReservations.php');
+        exit;
+    }
 }
-
-function getActiveVehicles($pdo) {
-    $query = "SELECT COUNT(*) as total FROM vehicule WHERE disponibilite = 1";
-    $result = $pdo->query($query);
-    return $result->fetch()['total'];
-}
-
-function getActiveClients($pdo) {
-    $query = "SELECT COUNT(*) as total FROM personne WHERE roleId = 2";
-    $result = $pdo->query($query);
-    return $result->fetch()['total'];
-}
-
-function getTotalReviews($pdo) {
-    $query = "SELECT COUNT(*) as total FROM avis";
-    $result = $pdo->query($query);
-    return $result->fetch()['total'];
-}
-
-function getRecentReservations($pdo, $limit = 10) {
+function getRecentReservations($pdo) {
     $query = "SELECT 
                 r.id,
                 p.nom as client_nom,
@@ -38,8 +29,7 @@ function getRecentReservations($pdo, $limit = 10) {
                 FROM reservation r
                 JOIN personne p ON r.clientId = p.id
                 JOIN vehicule v ON r.vehiculeId = v.id
-                ORDER BY r.dateDebut DESC
-                LIMIT 10";
+                ORDER BY r.dateDebut DESC";
     
     $result = $pdo->query($query);
     return $result->fetchAll();
@@ -69,20 +59,15 @@ function getStatusStyle($statut) {
             ];
     }
 }
-
-$totalReservations = getTotalReservations($pdo);
-$activeVehicles = getActiveVehicles($pdo);
-$activeClients = getActiveClients($pdo);
-$totalReviews = getTotalReviews($pdo);
-
 $recentReservations = getRecentReservations($pdo);
+
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive & Loc Admin</title>
+    <title>AutoMove</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -116,11 +101,11 @@ $recentReservations = getRecentReservations($pdo);
     <aside class="fixed left-0 top-0 z-20 h-full w-64 pt-16 bg-white border-r border-gray-200 hidden lg:block">
         <div class="p-4">
             <nav class="space-y-1">
-                <a href="dashboardAdmin.php" class="flex items-center px-4 py-2 text-gray-900 bg-gray-100 rounded-lg">
+                <a href="dashboardAdmin.php" class="flex items-center px-4 py-2 text-gray-900 hover:bg-gray-100 rounded-lg">
                     <i data-feather="bar-chart-2" class="h-5 w-5 mr-3"></i>
                     Tableau de bord
                 </a>
-                <a href="AdminReservations.php" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                <a href="AdminReservations.php" class="flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg">
                     <i data-feather="calendar" class="h-5 w-5 mr-3"></i>
                     Réservations
                 </a>
@@ -139,63 +124,10 @@ $recentReservations = getRecentReservations($pdo);
     <!-- Main Content -->
     <main class="lg:ml-64 pt-16">
         <div class="p-4 lg:p-8">
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <!-- Stat Card 1 -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Réservations Totales</p>
-                            <h3 class="text-2xl font-bold mt-1"><?php echo $totalReservations; ?></h3>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <i data-feather="calendar" class="h-6 w-6 text-blue-600"></i>
-                        </div>
-                    </div>
-                </div>
-                <!-- Stat Card 2 -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Véhicules Actifs</p>
-                            <h3 class="text-2xl font-bold mt-1"><?php echo $activeVehicles; ?></h3>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <i data-feather="truck" class="h-6 w-6 text-blue-600"></i>
-                        </div>
-                    </div>
-                </div>
-                <!-- Stat Card 3 -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Clients Actifs</p>
-                            <h3 class="text-2xl font-bold mt-1"><?php echo $activeClients; ?></h3>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <i data-feather="users" class="h-6 w-6 text-blue-600"></i>
-                        </div>
-                    </div>
-                </div>
-                <!-- Stat Card 4 -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Avis Reçus</p>
-                            <h3 class="text-2xl font-bold mt-1"><?php echo $totalReviews; ?></h3>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <i data-feather="star" class="h-6 w-6 text-blue-600"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Bookings -->
             <div class="mt-8">
                 <div class="bg-white rounded-lg shadow">
                     <div class="p-6">
-                        <h2 class="text-lg font-medium">Réservations Récentes</h2>
+                        <h2 class="text-lg font-medium">Réservations </h2>
                         <div class="mt-4 overflow-x-auto">
                             <table class="w-full">
                                 <thead class="text-left bg-gray-50">
@@ -222,12 +154,17 @@ $recentReservations = getRecentReservations($pdo);
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex space-x-2">
-                                                <button class="text-blue-600 hover:text-blue-800">
+                                                <button onclick="openEditModal(<?php echo htmlspecialchars($reservation['id']); ?>)" 
+                                                        class="text-blue-600 hover:text-blue-800 edit">
                                                     <i data-feather="edit-2" class="h-4 w-4"></i>
                                                 </button>
-                                                <button class="text-red-600 hover:text-red-800">
-                                                    <i data-feather="trash-2" class="h-4 w-4"></i>
-                                                </button>
+                                                <form method="POST" class="inline" >
+                                                    <input type="hidden" name="reservation_id" value="<?php echo htmlspecialchars($reservation['id']); ?>">
+                                                    <input type="hidden" name="delete" value="1">
+                                                    <button type="submit" class="text-red-600 hover:text-red-800">
+                                                        <i data-feather="trash-2" class="h-4 w-4"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
@@ -239,10 +176,46 @@ $recentReservations = getRecentReservations($pdo);
                 </div>
             </div>
         </div>
+        <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium">Modifier le Statut</h3>
+                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-feather="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="reservation_id" id="editReservationId">
+                    <input type="hidden" name="update_status" value="1">
+                    <div class="mb-4">
+                        <label for="statut" class="block text-sm font-medium text-gray-700">Statut</label>
+                        <select id="statut" name="statut" class="mt-1 block w-full rounded-lg border-gray-300">
+                            <option value="confirmée">Confirmée</option>
+                            <option value="en attente">En attente</option>
+                            <option value="annulée">Annulée</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" onclick="closeEditModal()" 
+                                class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Annuler</button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </main>
 
     <script>
         feather.replace();
+        function openEditModal(reservationId) {
+            document.getElementById('editReservationId').value = reservationId;
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
     </script>
 </body>
 </html>

@@ -2,32 +2,7 @@
 require_once '../class/DatabaseConnection.php';
 $db = new Database();
 $pdo = $db->getConnection();
-
-function getTotalReservations($pdo) {
-    $query = "SELECT COUNT(*) as total FROM reservation";
-    $result = $pdo->query($query);
-    return $result->fetch()['total'];
-}
-
-function getActiveVehicles($pdo) {
-    $query = "SELECT COUNT(*) as total FROM vehicule WHERE disponibilite = 1";
-    $result = $pdo->query($query);
-    return $result->fetch()['total'];
-}
-
-function getActiveClients($pdo) {
-    $query = "SELECT COUNT(*) as total FROM personne WHERE roleId = 2";
-    $result = $pdo->query($query);
-    return $result->fetch()['total'];
-}
-
-function getTotalReviews($pdo) {
-    $query = "SELECT COUNT(*) as total FROM avis";
-    $result = $pdo->query($query);
-    return $result->fetch()['total'];
-}
-
-function getRecentReservations($pdo, $limit = 10) {
+function getRecentReservations($pdo) {
     $query = "SELECT 
                 r.id,
                 p.nom as client_nom,
@@ -38,8 +13,7 @@ function getRecentReservations($pdo, $limit = 10) {
                 FROM reservation r
                 JOIN personne p ON r.clientId = p.id
                 JOIN vehicule v ON r.vehiculeId = v.id
-                ORDER BY r.dateDebut DESC
-                LIMIT 10";
+                ORDER BY r.dateDebut DESC";
     
     $result = $pdo->query($query);
     return $result->fetchAll();
@@ -69,12 +43,6 @@ function getStatusStyle($statut) {
             ];
     }
 }
-
-$totalReservations = getTotalReservations($pdo);
-$activeVehicles = getActiveVehicles($pdo);
-$activeClients = getActiveClients($pdo);
-$totalReviews = getTotalReviews($pdo);
-
 $recentReservations = getRecentReservations($pdo);
 ?>
 <!DOCTYPE html>
@@ -82,7 +50,7 @@ $recentReservations = getRecentReservations($pdo);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive & Loc Admin</title>
+    <title>AutoMove</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -116,7 +84,7 @@ $recentReservations = getRecentReservations($pdo);
     <aside class="fixed left-0 top-0 z-20 h-full w-64 pt-16 bg-white border-r border-gray-200 hidden lg:block">
         <div class="p-4">
             <nav class="space-y-1">
-                <a href="dashboardAdmin.php" class="flex items-center px-4 py-2 text-gray-900 bg-gray-100 rounded-lg">
+                <a href="dashboardAdmin.php" class="flex items-center px-4 py-2 text-gray-900 hover:bg-gray-100 rounded-lg">
                     <i data-feather="bar-chart-2" class="h-5 w-5 mr-3"></i>
                     Tableau de bord
                 </a>
@@ -128,7 +96,7 @@ $recentReservations = getRecentReservations($pdo);
                     <i data-feather="truck" class="h-5 w-5 mr-3"></i>
                     Véhicules
                 </a>
-                <a href="AdminAvis.php" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                <a href="AdminAvis.php" class="flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg">
                     <i data-feather="star" class="h-5 w-5 mr-3"></i>
                     Avis
                 </a>
@@ -139,63 +107,10 @@ $recentReservations = getRecentReservations($pdo);
     <!-- Main Content -->
     <main class="lg:ml-64 pt-16">
         <div class="p-4 lg:p-8">
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <!-- Stat Card 1 -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Réservations Totales</p>
-                            <h3 class="text-2xl font-bold mt-1"><?php echo $totalReservations; ?></h3>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <i data-feather="calendar" class="h-6 w-6 text-blue-600"></i>
-                        </div>
-                    </div>
-                </div>
-                <!-- Stat Card 2 -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Véhicules Actifs</p>
-                            <h3 class="text-2xl font-bold mt-1"><?php echo $activeVehicles; ?></h3>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <i data-feather="truck" class="h-6 w-6 text-blue-600"></i>
-                        </div>
-                    </div>
-                </div>
-                <!-- Stat Card 3 -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Clients Actifs</p>
-                            <h3 class="text-2xl font-bold mt-1"><?php echo $activeClients; ?></h3>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <i data-feather="users" class="h-6 w-6 text-blue-600"></i>
-                        </div>
-                    </div>
-                </div>
-                <!-- Stat Card 4 -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Avis Reçus</p>
-                            <h3 class="text-2xl font-bold mt-1"><?php echo $totalReviews; ?></h3>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <i data-feather="star" class="h-6 w-6 text-blue-600"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Bookings -->
             <div class="mt-8">
                 <div class="bg-white rounded-lg shadow">
                     <div class="p-6">
-                        <h2 class="text-lg font-medium">Réservations Récentes</h2>
+                        <h2 class="text-lg font-medium">Réservations </h2>
                         <div class="mt-4 overflow-x-auto">
                             <table class="w-full">
                                 <thead class="text-left bg-gray-50">

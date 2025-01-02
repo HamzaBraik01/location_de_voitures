@@ -17,11 +17,11 @@ class Categorie {
     }
 
     public static function getAll() {
-        // Code to fetch all categories from the database
+        
     }
 
     public static function getById($id) {
-        // Code to fetch a category by id from the database
+        
     }
 }
 ?>

@@ -5,8 +5,9 @@ class Vehicule {
     private $prixParJour;
     private $disponibilite;
     private $categorieId;
+    private $image; 
 
-    public function __construct($id = null, $modele, $prixParJour, $disponibilite, $categorieId) {
+    public function __construct($id = null, $modele, $prixParJour, $disponibilite, $categorieId,$image = null) {
         $this->id = $id;
         $this->modele = $modele;
         $this->prixParJour = $prixParJour;
@@ -32,6 +33,9 @@ class Vehicule {
 
     public function getCategorieId() {
         return $this->categorieId;
+    }
+    public function getImage() {
+        return $this->image; 
     }
 
     public static function getAll() {

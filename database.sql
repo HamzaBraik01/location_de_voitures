@@ -64,8 +64,16 @@ CREATE TABLE Avis (
     note INT CHECK (note BETWEEN 1 AND 5),
     clientId INT NOT NULL,
     vehiculeId INT NOT NULL,
-    FOREIGN KEY (clientId) REFERENCES Client(id) ON DELETE CASCADE,
+    FOREIGN KEY (clientId) REFERENCES personne(id) ON DELETE CASCADE,
     FOREIGN KEY (vehiculeId) REFERENCES Vehicule(id) ON DELETE CASCADE
 );
 
 INSERT INTO `role`(`id`, `nom`) VALUES (1,'admin'),(2,'client');
+
+ALTER TABLE Reservation 
+ADD COLUMN statut ENUM('confirmée', 'en attente', 'annulée') DEFAULT 'en attente' AFTER lieuPriseEnCharge;
+
+
+
+ALTER TABLE Reservation DROP FOREIGN KEY reservation_ibfk_1;
+ALTER TABLE Reservation ADD CONSTRAINT fk_personne_id FOREIGN KEY (clientId) REFERENCES Personne(id) ON DELETE CASCADE;
