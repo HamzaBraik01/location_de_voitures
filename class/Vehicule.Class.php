@@ -1,4 +1,6 @@
 <?php
+require_once 'DatabaseConnection.php';
+$db = new Database();
 class Vehicule {
     private $id;
     private $modele;
@@ -6,6 +8,7 @@ class Vehicule {
     private $disponibilite;
     private $categorieId;
     private $image; 
+    private $db;
 
     public function __construct($id = null, $modele, $prixParJour, $disponibilite, $categorieId,$image = null) {
         $this->id = $id;
@@ -13,6 +16,7 @@ class Vehicule {
         $this->prixParJour = $prixParJour;
         $this->disponibilite = $disponibilite;
         $this->categorieId = $categorieId;
+        $this->db = new Database(); 
     }
 
     public function getId() {
@@ -39,11 +43,19 @@ class Vehicule {
     }
 
     public static function getAll() {
-        // Code to fetch all vehicles from the database
+        
     }
 
     public static function getById($id) {
-        // Code to fetch a vehicle by id from the database
+        
+    }
+    public static function getByCategory($categoryId) {
+        $db = new Database();
+        $conn = $db->getConnection();
+        $sql = "SELECT * FROM vehicule WHERE categorieId = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$categoryId]);
+        return $stmt->fetchAll();
     }
 }
 ?>

@@ -45,7 +45,7 @@ CREATE TABLE Vehicule (
     FOREIGN KEY (categorieId) REFERENCES Categorie(id) ON DELETE CASCADE
 );
 
-
+----stust
 CREATE TABLE Reservation (
     id INT AUTO_INCREMENT PRIMARY KEY,
     dateDebut DATE NOT NULL,
@@ -77,3 +77,55 @@ ADD COLUMN statut ENUM('confirmée', 'en attente', 'annulée') DEFAULT 'en atten
 
 ALTER TABLE Reservation DROP FOREIGN KEY reservation_ibfk_1;
 ALTER TABLE Reservation ADD CONSTRAINT fk_personne_id FOREIGN KEY (clientId) REFERENCES Personne(id) ON DELETE CASCADE;
+
+CREATE VIEW ListeVehicules AS
+SELECT 
+    v.modele AS modele,
+    v.prixParJour AS prix_par_jour,
+    v.disponibilite AS est_disponible,
+    v.image AS image,
+    c.nom AS categorie,
+    COALESCE(AVG(a.note), 0) AS note_moyenne,
+    COUNT(a.id) AS nombre_avis
+FROM 
+    vehicule v
+JOIN 
+    categorie c ON v.categorieId = c.id
+LEFT JOIN 
+    avis a ON v.id = a.vehiculeId
+GROUP BY 
+    v.modele, v.prixParJour, v.disponibilite, v.image, c.nom;
+
+ALTER TABLE `avis`
+ADD COLUMN `reservationId` INT(11) NOT NULL AFTER `vehiculeId`;    
+
+DROP TABLE Avis;
+CREATE TABLE Avis (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    commentaire TEXT NOT NULL,
+    note INT CHECK (note BETWEEN 1 AND 5),
+    clientId INT NOT NULL,
+    reservationId INT NOT NULL,
+    FOREIGN KEY (clientId) REFERENCES personne(id) ON DELETE CASCADE,
+    FOREIGN KEY (reservationId) REFERENCES Reservation(id) ON DELETE CASCADE
+);
+
+DROP VIEW IF EXISTS ListeVehicules;
+
+CREATE VIEW ListeVehicules AS
+SELECT 
+    v.modele AS modele,
+    v.prixParJour AS prixParJour,
+    v.disponibilite AS estDisponible,
+    c.nom AS categorie,
+    v.image AS image,
+    COALESCE(AVG(a.note), 0) AS moyenneNote,
+    COUNT(a.id) AS nombreAvis
+FROM 
+    vehicule v
+LEFT JOIN 
+    categorie c ON v.categorieId = c.id
+LEFT JOIN 
+    avis a ON v.id = a.reservationId
+GROUP BY 
+    v.modele, v.prixParJour, v.disponibilite, c.nom, v.image;
