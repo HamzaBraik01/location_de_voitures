@@ -1,8 +1,18 @@
 <?php
 require_once '../class/DatabaseConnection.php';
-$db = new Database();
-$pdo = $db->getConnection();
-
+require_once '../class/Avis.Class.php';
+$avisManager = new Avis();
+$avis = $avisManager->getAllAvis();
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_avis'])) {
+    $id = $_POST['delete_avis'];
+    if ($avisManager->deleteAvis($id)) {
+        header('Location: AdminAvis.php?success=1');
+        exit;
+    } else {
+        header('Location: AdminAvis.php?error=1');
+        exit;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -66,15 +76,26 @@ $pdo = $db->getConnection();
     <!-- Main Content -->
     <main class="lg:ml-64 pt-16">
         <div class="p-4 lg:p-8">
+            <?php if (isset($_GET['success'])): ?>
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                    L'avis a été supprimé avec succès.
+                </div>
+            <?php endif; ?>
+            <?php if (isset($_GET['error'])): ?>
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    Une erreur est survenue lors de la suppression.
+                </div>
+            <?php endif; ?>
             <div class="mt-8">
                 <div class="bg-white rounded-lg shadow">
                     <div class="p-6">
-                        <h2 class="text-lg font-medium">Réservations </h2>
+                        <h2 class="text-lg font-medium">Liste des Avis </h2>
                         <div class="mt-4 overflow-x-auto">
                             <table class="w-full">
                                 <thead class="text-left bg-gray-50">
                                     <tr>
                                         <th class="px-6 py-3 text-sm text-gray-500">Client</th>
+                                        <th class="px-6 py-3 text-sm text-gray-500">Modèle</th>
                                         <th class="px-6 py-3 text-sm text-gray-500">Image</th>
                                         <th class="px-6 py-3 text-sm text-gray-500">Commentaire</th>
                                         <th class="px-6 py-3 text-sm text-gray-500">Note</th>
@@ -82,18 +103,37 @@ $pdo = $db->getConnection();
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200">
-                                
-                                    <tr>
-                                        <td class="px-6 py-4"></td>
-                                        <td class="px-6 py-4"></td>
-                                        <td class="px-6 py-4"></td>
-                                        <td class="px-6 py-4"></td>
+                                    <?php foreach ($avis as $avis_item): ?>
+                                        <tr>
+                                        <td class="px-6 py-4"><?php echo htmlspecialchars($avis_item['client_nom']); ?></td>
+                                        <td class="px-6 py-4"><?php echo htmlspecialchars($avis_item['vehicule_modele']); ?></td>
                                         <td class="px-6 py-4">
-                                            <button class="text-red-600 hover:text-red-800">
-                                                <i data-feather="trash-2" class="h-4 w-4"></i>
-                                            </button>
+                                            <img src="../uploadsimage/<?php echo htmlspecialchars($avis_item['vehicule_image']); ?>" 
+                                                    alt="Véhicule" 
+                                                    class="h-12 w-12 object-cover rounded">
+                                        </td>
+                                        <td class="px-6 py-4"><?php echo htmlspecialchars($avis_item['commentaire']); ?></td>
+                                        <td class="px-6 py-4">
+                                            <?php
+                                            for ($i = 1; $i <= 5; $i++) {
+                                                if ($i <= $avis_item['note']) {
+                                                    echo '<i data-feather="star" class="h-4 w-4 inline-block text-yellow-400"></i>';
+                                                } else {
+                                                    echo '<i data-feather="star" class="h-4 w-4 inline-block text-gray-300"></i>';
+                                                }
+                                            }
+                                            ?>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <form method="POST" class="inline">
+                                                <button type="submit" name="delete_avis" value="<?php echo $avis_item['id']; ?>" 
+                                                        class="text-red-600 hover:text-red-800">
+                                                    <i data-feather="trash-2" class="h-4 w-4"></i>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
+                                    <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
