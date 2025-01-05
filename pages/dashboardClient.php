@@ -1,9 +1,15 @@
+<?php
+require_once '../class/DatabaseConnection.php';
+require_once '../class/Categorie.Class.php';
+
+$categories = Categorie::getAll();
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive & Loc - Espace Client</title>
+    <title>AutoMove- Espace Client</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/jquery.dataTables.min.css">
@@ -45,18 +51,12 @@
                     <i data-feather="grid" class="h-4 w-4"></i>
                     Toutes les catégories
                 </button>
-                <button class="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-lg flex items-center gap-2 whitespace-nowrap">
-                    <i data-feather="truck" class="h-4 w-4"></i>
-                    Utilitaires
-                </button>
-                <button class="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-lg flex items-center gap-2 whitespace-nowrap">
-                    <i data-feather="battery-charging" class="h-4 w-4"></i>
-                    Électriques
-                </button>
-                <button class="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-lg flex items-center gap-2 whitespace-nowrap">
-                    <i data-feather="sun" class="h-4 w-4"></i>
-                    Luxe
-                </button>
+                <?php foreach ($categories as $categorie): ?>
+                    <button class="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-lg flex items-center gap-2 whitespace-nowrap">
+                        <i data-feather="truck" class="h-4 w-4"></i>
+                        <?php echo htmlspecialchars($categorie['nom']); ?>
+                    </button>
+                <?php endforeach; ?>
             </div>
 
             <!-- Vehicle Grid -->
@@ -126,17 +126,7 @@
     </main>
 
     <!-- Vehicle Detail Modal -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-lg max-w-2xl mx-auto mt-20 p-6">
-            <div class="flex justify-between items-start">
-                <h2 class="text-xl font-bold">Détails du véhicule</h2>
-                <button class="p-2 hover:bg-gray-100 rounded-lg">
-                    <i data-feather="x" class="h-5 w-5"></i>
-                </button>
-            </div>
-            <!-- Modal content would go here -->
-        </div>
-    </div>
+    
 
     <script>
         feather.replace();
