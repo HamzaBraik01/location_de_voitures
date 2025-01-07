@@ -57,5 +57,43 @@ class Vehicule {
         $stmt->execute([$categoryId]);
         return $stmt->fetchAll();
     }
+    public static function getPaginatedVehicles($page = 1, $perPage = 3) {
+        $db = new Database();
+        $conn = $db->getConnection();
+
+        $offset = ($page - 1) * $perPage;
+
+        $sql = "SELECT * FROM vehicule LIMIT :perPage OFFSET :offset";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindValue(':perPage', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public static function getTotalVehicles() {
+        $db = new Database();
+        $conn = $db->getConnection();
+
+        $sql = "SELECT COUNT(*) as total FROM vehicule";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetch()['total'];
+    }
+    public static function updateDisponibilite($id, $disponibilite) {
+        $db = new Database();
+        $conn = $db->getConnection();
+    
+        $sql = "UPDATE vehicule SET disponibilite = :disponibilite WHERE id = :id";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            'disponibilite' => $disponibilite ? 1 : 0, 
+            'id' => $id
+        ]);
+    
+        return true; 
+    }
 }
 ?>

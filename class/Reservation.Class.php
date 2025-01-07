@@ -1,4 +1,5 @@
 <?php
+require_once 'DatabaseConnection.php';
 class Reservation {
     private $id;
     private $dateDebut;
@@ -41,11 +42,25 @@ class Reservation {
     }
 
     public static function getByClientId($clientId) {
-        // Code to fetch reservations by client ID
     }
 
     public static function getByVehiculeId($vehiculeId) {
-        // Code to fetch reservations by vehicle ID
     }
+    public static function createReservation($dateDebut, $dateFin, $lieuPriseEnCharge, $clientId, $vehiculeId) {
+        $db = new Database();
+        $conn = $db->getConnection();
+
+        $stmt = $conn->prepare("INSERT INTO reservation (dateDebut, dateFin, lieuPriseEnCharge, clientId, vehiculeId, statut) VALUES (:dateDebut, :dateFin, :lieuPriseEnCharge, :clientId, :vehiculeId, 'en attente')");
+        $stmt->execute([
+            'dateDebut' => $dateDebut,
+            'dateFin' => $dateFin,
+            'lieuPriseEnCharge' => $lieuPriseEnCharge,
+            'clientId' => $clientId,
+            'vehiculeId' => $vehiculeId
+        ]);
+
+        return true; 
+    }
+            
 }
 ?>

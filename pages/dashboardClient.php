@@ -1,8 +1,33 @@
 <?php
+session_start();
 require_once '../class/DatabaseConnection.php';
 require_once '../class/Categorie.Class.php';
+require_once '../class/Vehicule.Class.php';
+require_once '../class/Reservation.Class.php';
 
 $categories = Categorie::getAll();
+
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$perPage = 3;
+
+$vehicules = Vehicule::getPaginatedVehicles($page, $perPage);
+$totalVehicles = Vehicule::getTotalVehicles();
+$totalPages = ceil($totalVehicles / $perPage);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $vehicleId = $_POST['vehicleId'];
+    $pickupDate = $_POST['pickupDate'];
+    $returnDate = $_POST['returnDate'];
+    $pickupLocation = $_POST['pickupLocation'];
+    $clientId = $_SESSION['user_id']; 
+
+    $success = Reservation::createReservation($pickupDate, $returnDate, $pickupLocation, $clientId, $vehicleId);
+
+    if ($success) {
+        Vehicule::updateDisponibilite($vehicleId, false);
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -61,75 +86,96 @@ $categories = Categorie::getAll();
 
             <!-- Vehicle Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
-                <!-- Vehicle Card -->
-                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                    <img src="/api/placeholder/400/200" alt="Véhicule" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-semibold text-lg">Renault Clio</h3>
-                                <p class="text-gray-600 text-sm">Essence - 5 portes</p>
+                <?php foreach ($vehicules as $vehicule): ?>
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg hover:scale-105 transition-all duration-300">
+                        <img src="../uploadsimage/<?php echo htmlspecialchars($vehicule['image']); ?>" alt="Véhicule" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold text-lg"><?php echo htmlspecialchars($vehicule['modele']); ?></h3>
+                                </div>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full"><?php echo $vehicule['disponibilite'] ? 'Disponible' : 'Indisponible'; ?></span>
                             </div>
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Disponible</span>
-                        </div>
-                        <div class="mt-4 flex justify-between items-center">
-                            <div>
-                                <p class="text-gray-500 text-sm">À partir de</p>
-                                <p class="text-lg font-bold">45€ /jour</p>
+                            <div class="mt-4 flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500 text-sm">À partir de</p>
+                                    <p class="text-lg font-bold"><?php echo htmlspecialchars($vehicule['prixParJour']); ?>DH /jour</p>
+                                </div>
+                                <button onclick="openModal(<?php echo $vehicule['id']; ?>)" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                                    Réserver
+                                </button>
                             </div>
-                            <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                                Réserver
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- More Vehicle Cards -->
-                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                    <img src="/api/placeholder/400/200" alt="Véhicule" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-semibold text-lg">Peugeot e-208</h3>
-                                <p class="text-gray-600 text-sm">Électrique - 5 portes</p>
-                            </div>
-                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Réservé</span>
-                        </div>
-                        <div class="mt-4 flex justify-between items-center">
-                            <div>
-                                <p class="text-gray-500 text-sm">À partir de</p>
-                                <p class="text-lg font-bold">55€ /jour</p>
-                            </div>
-                            <button class="bg-gray-100 text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed">
-                                Réserver
-                            </button>
                         </div>
                     </div>
-                </div>
+                <?php endforeach; ?>
             </div>
 
             <!-- Pagination -->
             <div class="mt-8 flex justify-center">
                 <nav class="flex items-center gap-2">
-                    <button class="p-2 rounded-lg hover:bg-gray-100">
-                        <i data-feather="chevron-left" class="h-5 w-5"></i>
-                    </button>
-                    <button class="px-4 py-2 bg-blue-500 text-white rounded-lg">1</button>
-                    <button class="px-4 py-2 hover:bg-gray-100 rounded-lg">2</button>
-                    <button class="px-4 py-2 hover:bg-gray-100 rounded-lg">3</button>
-                    <button class="p-2 rounded-lg hover:bg-gray-100">
-                        <i data-feather="chevron-right" class="h-5 w-5"></i>
-                    </button>
+                    <?php if ($page > 1): ?>
+                        <a href="?page=<?php echo $page - 1; ?>" class="p-2 rounded-lg hover:bg-gray-100">
+                            <i data-feather="chevron-left" class="h-5 w-5"></i>
+                        </a>
+                    <?php endif; ?>
+
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                        <a href="?page=<?php echo $i; ?>" class="px-4 py-2 <?php echo $i === $page ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'; ?> rounded-lg">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
+
+                    <?php if ($page < $totalPages): ?>
+                        <a href="?page=<?php echo $page + 1; ?>" class="p-2 rounded-lg hover:bg-gray-100">
+                            <i data-feather="chevron-right" class="h-5 w-5"></i>
+                        </a>
+                    <?php endif; ?>
                 </nav>
+            </div>
+            <!-- Modal -->
+            <div id="reservationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                    <div class="mt-3 text-center">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Réserver un véhicule</h3>
+                        <form id="reservationForm" action="" method="POST" class="mt-2">
+                            <input type="hidden" id="vehicleId" name="vehicleId" value="">
+                            <div class="mb-4">
+                                <label for="pickupDate" class="block text-sm font-medium text-gray-700">Date de prise en charge</label>
+                                <input type="date" id="pickupDate" name="pickupDate" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label for="returnDate" class="block text-sm font-medium text-gray-700">Date de retour</label>
+                                <input type="date" id="returnDate" name="returnDate" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label for="pickupLocation" class="block text-sm font-medium text-gray-700">Lieu de prise en charge</label>
+                                <input type="text" id="pickupLocation" name="pickupLocation" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                            <div class="items-center px-4 py-3">
+                                <button type="submit" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    Confirmer la réservation
+                                </button>
+                                <button type="button" onclick="closeModal()" class="ml-3 px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- Vehicle Detail Modal -->
-    
-
     <script>
         feather.replace();
+        function openModal(vehicleId) {
+        document.getElementById('reservationModal').classList.remove('hidden');
+        document.getElementById('vehicleId').value = vehicleId;
+        }
+
+        function closeModal() {
+            document.getElementById('reservationModal').classList.add('hidden');
+        }
     </script>
 </body>
 </html>

@@ -129,3 +129,57 @@ LEFT JOIN
     avis a ON v.id = a.reservationId
 GROUP BY 
     v.modele, v.prixParJour, v.disponibilite, c.nom, v.image;
+
+--------------------------------------------------------------------------------------------------------
+-- Création de la table Theme
+CREATE TABLE Theme (
+    id_theme INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+-- Création de la table Tag
+CREATE TABLE Tag (
+    id_tag INT AUTO_INCREMENT PRIMARY KEY,
+    description TEXT,
+    name VARCHAR(255) NOT NULL
+);
+
+-- Création de la table Article
+CREATE TABLE Article (
+    id_article INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    id_theme INT NOT NULL,
+    id_user INT NOT NULL,
+    status ENUM('pending', 'confirmed', 'canceled') DEFAULT 'pending',
+    FOREIGN KEY (id_theme) REFERENCES Theme(id_theme) ON DELETE CASCADE,
+    FOREIGN KEY (id_user) REFERENCES personne(id) ON DELETE CASCADE
+);
+
+-- Création de la table Comment
+CREATE TABLE Comment (
+    id_comment INT AUTO_INCREMENT PRIMARY KEY,
+    content TEXT NOT NULL,
+    id_article INT NOT NULL,
+    id_user INT NOT NULL,
+    FOREIGN KEY (id_article) REFERENCES Article(id_article) ON DELETE CASCADE,
+    FOREIGN KEY (id_user) REFERENCES personne(id) ON DELETE CASCADE
+);
+
+-- Création de la table Article_Tag
+CREATE TABLE Article_Tag (
+    id_tag INT NOT NULL,
+    id_article INT NOT NULL,
+    PRIMARY KEY (id_tag, id_article),
+    FOREIGN KEY (id_tag) REFERENCES Tag(id_tag) ON DELETE CASCADE,
+    FOREIGN KEY (id_article) REFERENCES Article(id_article) ON DELETE CASCADE
+);
+
+-- Création de la table Favorite
+CREATE TABLE Favorite (
+    id_article INT NOT NULL,
+    id_user INT NOT NULL,
+    PRIMARY KEY (id_article, id_user),
+    FOREIGN KEY (id_article) REFERENCES Article(id_article) ON DELETE CASCADE,
+    FOREIGN KEY (id_user) REFERENCES personne(id) ON DELETE CASCADE
+);

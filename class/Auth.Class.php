@@ -27,7 +27,7 @@ class Auth {
                     header('Location: ../pages/dashboardAdmin.php');
                     exit();
                 } elseif ($user['roleId'] == 2) {
-                    /*header('Location: dashboardClient.php');*/
+                    header('Location: ../pages/dashboardClient.php');
                     exit();
                 }
                 return true;
