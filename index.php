@@ -31,6 +31,7 @@
                         <a href="#" class="text-white hover:text-cyan-400 transition-colors">Accueil</a>
                         <a href="#" class="text-white hover:text-cyan-400 transition-colors">Véhicules</a>
                         <a href="#" class="text-white hover:text-cyan-400 transition-colors">Catégories</a>
+                        <a href="./pages/ClientBlog.php" class="text-white hover:text-cyan-400 transition-colors">Blog</a>
                         <a href="#" class="text-white hover:text-cyan-400 transition-colors">Contact</a>
                         <a href="./pages/login.php" class="bg-cyan-400 text-white px-6 py-2 rounded-full hover:bg-cyan-500 transition-colors">Connexion</a>
                     </div>
@@ -47,10 +48,11 @@
 
             <!-- Mobile Menu Items -->
             <div x-show="isOpen" class="md:hidden bg-white border-t" x-transition>
-                <a href="#" class="block px-4 py-2 text-gray-600 hover:bg-gray-100">Accueil</a>
-                <a href="#" class="block px-4 py-2 text-gray-600 hover:bg-gray-100">Véhicules</a>
-                <a href="#" class="block px-4 py-2 text-gray-600 hover:bg-gray-100">Catégories</a>
-                <a href="#" class="block px-4 py-2 text-gray-600 hover:bg-gray-100">Contact</a>
+                <a href="#" class="block px-4 py-2 text-cyan-600 hover:bg-cyan-500">Accueil</a>
+                <a href="#" class="block px-4 py-2 text-cyan-600 hover:bg-cyan-500">Véhicules</a>
+                <a href="#" class="block px-4 py-2 text-cyan-600 hover:bg-cyan-500">Catégories</a>
+                <a href="./pages/ClientBlog.php" class="block px-4 py-2 text-gray-600 bg-cyan-500">Blog</a>
+                <a href="#" class="block px-4 py-2 text-cyan-600 hover:bg-cyan-500">Contact</a>
                 <div class="px-4 py-2">
                     <a href="./pages/login.php" class="w-full bg-cyan-400 text-white px-4 py-2 rounded-full hover:bg-cyan-500">Connexion</a>
                 </div>

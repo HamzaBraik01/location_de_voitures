@@ -183,3 +183,6 @@ CREATE TABLE Favorite (
     FOREIGN KEY (id_article) REFERENCES Article(id_article) ON DELETE CASCADE,
     FOREIGN KEY (id_user) REFERENCES personne(id) ON DELETE CASCADE
 );
+
+ALTER TABLE Article
+ADD COLUMN image BLOB;
