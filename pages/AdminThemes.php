@@ -5,59 +5,89 @@ require_once '../class/Article.Class.php';
 $db = new Database();
 $pdo = $db->getConnection();
 
-// Traitement du formulaire pour ajouter un thème
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_theme'])) {
-    $themeName = $_POST['theme_name'];
-    $stmt = $pdo->prepare("INSERT INTO Theme (name) VALUES (:name)");
-    $stmt->execute(['name' => $themeName]);
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit();
+// Dossier pour stocker les images uploadées
+$uploadDir = '../uploads/';
+
+// Créer le dossier s'il n'existe pas
+if (!is_dir($uploadDir)) {
+    mkdir($uploadDir, 0755, true);
 }
 
-// Traitement du formulaire pour ajouter un article
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_article'])) {
-    $articleName = $_POST['article_name'];
-    $articleContent = $_POST['article_content'];
-    $idTheme = $_POST['id_theme'];
-    $idUser = 1; // Remplacez par l'ID de l'utilisateur connecté
-    $stmt = $pdo->prepare("INSERT INTO Article (name, content, id_theme, id_user) VALUES (:name, :content, :id_theme, :id_user)");
-    $stmt->execute([
-        'name' => $articleName,
-        'content' => $articleContent,
-        'id_theme' => $idTheme,
-        'id_user' => $idUser
-    ]);
-    header("Location: " . $_SERVER['PHP_SELF']);
+// Ajouter un thème
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_theme'])) {
+    $theme = new Theme($_POST['name']);
+    $theme->save($pdo);
+    header("Location: AdminThemes.php");
     exit();
 }
 
 // Supprimer un thème
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_theme'])) {
-    $idTheme = $_POST['id_theme'];
-    $stmt = $pdo->prepare("DELETE FROM Theme WHERE id_theme = :id_theme");
-    $stmt->execute(['id_theme' => $idTheme]);
-    header("Location: " . $_SERVER['PHP_SELF']);
+    Theme::delete($pdo, $_POST['id_theme']);
+    header("Location: AdminThemes.php");
+    exit();
+}
+
+// Modifier un thème
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_theme'])) {
+    Theme::update($pdo, $_POST['id_theme'], $_POST['name']);
+    header("Location: AdminThemes.php");
+    exit();
+}
+
+// Ajouter un article
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_article'])) {
+    $imagePath = null;
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $imageName = basename($_FILES['image']['name']);
+        $imagePath = $uploadDir . $imageName;
+        move_uploaded_file($_FILES['image']['tmp_name'], $imagePath);
+    }
+
+    $article = new Article(
+        $_POST['name'],
+        $_POST['content'],
+        $_POST['id_theme'],
+        1, // Remplacez par l'ID de l'utilisateur connecté
+        'pending',
+        $imagePath
+    );
+    $article->save($pdo);
+    header("Location: AdminThemes.php");
     exit();
 }
 
 // Supprimer un article
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_article'])) {
-    $idArticle = $_POST['id_article'];
-    $stmt = $pdo->prepare("DELETE FROM Article WHERE id_article = :id_article");
-    $stmt->execute(['id_article' => $idArticle]);
-    header("Location: " . $_SERVER['PHP_SELF']);
+    Article::delete($pdo, $_POST['id_article']);
+    header("Location: AdminThemes.php");
     exit();
 }
 
-// Récupérer tous les thèmes avec leurs articles
-$stmt = $pdo->query("SELECT * FROM Theme");
-$themes = $stmt->fetchAll();
+// Modifier un article
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_article'])) {
+    $imagePath = null;
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $imageName = basename($_FILES['image']['name']);
+        $imagePath = $uploadDir . $imageName;
+        move_uploaded_file($_FILES['image']['tmp_name'], $imagePath);
+    }
 
-foreach ($themes as &$theme) {
-    $stmt = $pdo->prepare("SELECT * FROM Article WHERE id_theme = :id_theme");
-    $stmt->execute(['id_theme' => $theme['id_theme']]);
-    $theme['articles'] = $stmt->fetchAll();
+    Article::update(
+        $pdo,
+        $_POST['id_article'],
+        $_POST['name'],
+        $_POST['content'],
+        $_POST['id_theme'],
+        1, // Remplacez par l'ID de l'utilisateur connecté
+        'pending',
+        $imagePath
+    );
+    header("Location: AdminThemes.php");
+    exit();
 }
+
+$themes = Theme::getAll($pdo);
 ?>
 
 <!DOCTYPE html>
@@ -65,7 +95,7 @@ foreach ($themes as &$theme) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Themes AutoMove</title>
+    <title>Gestion des Thèmes</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -115,9 +145,9 @@ foreach ($themes as &$theme) {
                     <i data-feather="star" class="h-5 w-5 mr-3"></i>
                     Avis
                 </a>
-                <a href="AdminAvis.php" class="flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg">
-                    <i data-feather="star" class="h-5 w-5 mr-3"></i>
-                    Themes
+                <a href="AdminThemes.php" class="flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg">
+                    <i data-feather="folder" class="h-5 w-5 mr-3"></i>
+                    Thèmes
                 </a>
             </nav>
         </div>
@@ -126,93 +156,148 @@ foreach ($themes as &$theme) {
     <!-- Main Content -->
     <main class="lg:ml-64 pt-16">
         <div class="p-4 lg:p-8">
-            <!-- Formulaire pour ajouter un thème -->
-            <form method="POST" class="mb-8">
-                <div class="flex gap-4">
-                    <input type="text" name="theme_name" placeholder="Nom du thème" class="flex-1 p-2 border border-gray-300 rounded-lg">
-                    <button type="submit" name="add_theme" class="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">Ajouter un thème</button>
-                </div>
-            </form>
+            <div class="mt-8">
+                <h2 class="text-2xl font-bold mb-6">Gestion des Thèmes</h2>
 
-            <!-- ... (le reste du code PHP et HTML reste inchangé) ... -->
-
-            <!-- Liste des thèmes avec leurs articles -->
-            <div class="space-y-4">
-                <?php foreach ($themes as $theme): ?>
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <div class="flex justify-between items-center">
-                            <h2 class="text-lg font-semibold"><?= htmlspecialchars($theme['name']) ?></h2>
-                            <div class="flex gap-2">
-                                <!-- Bouton pour afficher/cacher le formulaire d'ajout d'article -->
-                                <button onclick="toggleArticleForm(<?= $theme['id_theme'] ?>)" class="bg-green-500 text-white p-2 rounded-lg hover:bg-green-600 flex items-center gap-2">
-                                    <span>Ajouter un article</span>
-                                    <i id="icon<?= $theme['id_theme'] ?>" data-feather="chevron-down" class="h-4 w-4"></i>
-                                </button>
-                                <!-- Bouton pour supprimer le thème -->
-                                <form method="POST" >
-                                    <input type="hidden" name="id_theme" value="<?= $theme['id_theme'] ?>">
-                                    <button type="submit" name="delete_theme" class="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600">
-                                        <i data-feather="trash-2" class="h-4 w-4"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <!-- Formulaire pour ajouter un article (caché par défaut) -->
-                        <form method="POST" id="articleForm<?= $theme['id_theme'] ?>" class="mt-4 hidden">
-                            <input type="hidden" name="id_theme" value="<?= $theme['id_theme'] ?>">
-                            <div class="space-y-4">
-                                <input type="text" name="article_name" placeholder="Nom de l'article" class="w-full p-2 border border-gray-300 rounded-lg">
-                                <textarea name="article_content" placeholder="Contenu de l'article" class="w-full p-2 border border-gray-300 rounded-lg"></textarea>
-                                <button type="submit" name="add_article" class="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">Ajouter l'article</button>
-                            </div>
-                        </form>
-
-                        <!-- Liste des articles -->
-                        <div class="mt-4 space-y-2">
-                            <?php foreach ($theme['articles'] as $article): ?>
-                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                                    <div>
-                                        <h3 class="font-medium"><?= htmlspecialchars($article['name']) ?></h3>
-                                        <p class="text-sm text-gray-600"><?= htmlspecialchars($article['content']) ?></p>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <button class="text-blue-500 hover:text-blue-700">
-                                            <i data-feather="edit" class="h-4 w-4"></i>
-                                        </button>
-                                        <form method="POST" >
-                                            <input type="hidden" name="id_article" value="<?= $article['id_article'] ?>">
-                                            <button type="submit" name="delete_article" class="text-red-500 hover:text-red-700">
-                                                <i data-feather="trash-2" class="h-4 w-4"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
+                <!-- Formulaire pour ajouter un thème -->
+                <form method="POST" class="mb-8 bg-white p-6 rounded-lg shadow">
+                    <div class="flex gap-4 items-center">
+                        <input type="text" name="name" placeholder="Nom du thème" class="p-2 border rounded-lg flex-grow">
+                        <button type="submit" name="add_theme" class="bg-blue-500 text-white p-2 rounded-lg flex items-center">
+                            <i data-feather="plus" class="h-5 w-5 mr-2"></i>
+                            Ajouter
+                        </button>
                     </div>
-                <?php endforeach; ?>
+                </form>
+
+                <!-- Liste des thèmes -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <?php foreach ($themes as $theme): ?>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-semibold flex items-center">
+                                    <i data-feather="folder" class="h-6 w-6 mr-2 text-blue-500"></i>
+                                    <?= $theme['name'] ?>
+                                </h3>
+                                <div class="flex gap-2">
+                                    <!-- Bouton Modifier -->
+                                    <button onclick="openEditModal(<?= $theme['id_theme'] ?>, '<?= $theme['name'] ?>')" class="text-blue-500 hover:text-blue-700">
+                                        <i data-feather="edit" class="h-5 w-5"></i>
+                                    </button>
+                                    <!-- Bouton Supprimer -->
+                                    <form method="POST" class="inline">
+                                        <input type="hidden" name="id_theme" value="<?= $theme['id_theme'] ?>">
+                                        <button type="submit" name="delete_theme" class="text-red-500 hover:text-red-700">
+                                            <i data-feather="trash" class="h-5 w-5"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Bouton pour ajouter un article -->
+                            <button onclick="openAddArticleModal(<?= $theme['id_theme'] ?>)" class="bg-green-500 text-white p-2 rounded-lg flex items-center mb-4">
+                                <i data-feather="plus" class="h-4 w-4 mr-2"></i>
+                                Ajouter un article
+                            </button>
+
+                            <!-- Liste des articles pour ce thème -->
+                            <div class="space-y-2">
+                                <?php
+                                $articles = Article::getAllByTheme($pdo, $theme['id_theme']);
+                                foreach ($articles as $article): ?>
+                                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                        <span class="text-gray-700"><?= $article['name'] ?></span>
+                                        <div class="flex gap-2">
+                                            <!-- Bouton Modifier -->
+                                            <button onclick="openEditArticleModal(<?= $article['id_article'] ?>, '<?= $article['name'] ?>', '<?= $article['content'] ?>', <?= $article['id_theme'] ?>, '<?= $article['status'] ?>', '<?= $article['image'] ?>')" class="text-blue-500 hover:text-blue-700">
+                                                <i data-feather="edit" class="h-4 w-4"></i>
+                                            </button>
+                                            <!-- Bouton Supprimer -->
+                                            <form method="POST" class="inline">
+                                                <input type="hidden" name="id_article" value="<?= $article['id_article'] ?>">
+                                                <button type="submit" name="delete_article" class="text-red-500 hover:text-red-700">
+                                                    <i data-feather="trash" class="h-4 w-4"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
-        </div>  
+        </div>
+
+        <!-- Modal pour ajouter un article -->
+        <div id="addArticleModal" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden">
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium">Ajouter un article</h3>
+                    <button onclick="closeAddArticleModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-feather="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+                <form method="POST">
+                    <input type="hidden" id="add_article_id_theme" name="id_theme">
+                    <input type="text" name="name" placeholder="Nom de l'article" class="p-2 border rounded-lg w-full mb-4">
+                    <textarea name="content" placeholder="Contenu de l'article" class="p-2 border rounded-lg w-full mb-4"></textarea>
+                    <input type="text" name="image" placeholder="URL de l'image" class="p-2 border rounded-lg w-full mb-4">
+                    <div class="flex justify-end">
+                        <button type="button" onclick="closeAddArticleModal()" class="bg-gray-500 text-white p-2 rounded-lg mr-2">Annuler</button>
+                        <button type="submit" name="add_article" class="bg-green-500 text-white p-2 rounded-lg">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal pour modifier un article -->
+        <div id="editArticleModal" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden">
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium">Modifier l'article</h3>
+                    <button onclick="closeEditArticleModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-feather="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+                <form method="POST">
+                    <input type="hidden" id="edit_article_id" name="id_article">
+                    <input type="text" id="edit_article_name" name="name" placeholder="Nom de l'article" class="p-2 border rounded-lg w-full mb-4">
+                    <textarea id="edit_article_content" name="content" placeholder="Contenu de l'article" class="p-2 border rounded-lg w-full mb-4"></textarea>
+                    <input type="text" id="edit_article_image" name="image" placeholder="URL de l'image" class="p-2 border rounded-lg w-full mb-4">
+                    <div class="flex justify-end">
+                        <button type="button" onclick="closeEditArticleModal()" class="bg-gray-500 text-white p-2 rounded-lg mr-2">Annuler</button>
+                        <button type="submit" name="update_article" class="bg-blue-500 text-white p-2 rounded-lg">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
 
     <script>
         feather.replace();
 
-        function toggleArticleForm(themeId) {
-            const form = document.getElementById(`articleForm${themeId}`);
-            const icon = document.getElementById(`icon${themeId}`);
+        // Fonctions pour le modal d'ajout d'article
+        function openAddArticleModal(id_theme) {
+            document.getElementById('add_article_id_theme').value = id_theme;
+            document.getElementById('addArticleModal').classList.remove('hidden');
+        }
 
-            // Basculer la visibilité du formulaire
-            form.classList.toggle('hidden');
+        function closeAddArticleModal() {
+            document.getElementById('addArticleModal').classList.add('hidden');
+        }
 
-            // Changer l'icône en fonction de l'état du formulaire
-            if (form.classList.contains('hidden')) {
-                icon.setAttribute('data-feather', 'chevron-down');
-            } else {
-                icon.setAttribute('data-feather', 'chevron-up');
-            }
+        // Fonctions pour le modal de modification d'article
+        function openEditArticleModal(id, name, content, id_theme, status, image) {
+            document.getElementById('edit_article_id').value = id;
+            document.getElementById('edit_article_name').value = name;
+            document.getElementById('edit_article_content').value = content;
+            document.getElementById('edit_article_image').value = image;
+            document.getElementById('editArticleModal').classList.remove('hidden');
+        }
 
-            feather.replace();
+        function closeEditArticleModal() {
+            document.getElementById('editArticleModal').classList.add('hidden');
         }
     </script>
 </body>
