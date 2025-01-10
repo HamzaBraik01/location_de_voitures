@@ -9,25 +9,21 @@ class Tag {
         $this->description = $description;
     }
 
-    public function getIdTag(): int {
-        return $this->id_tag;
+    public static function getAll($pdo) {
+        $stmt = $pdo->query("SELECT * FROM Tag");
+        return $stmt->fetchAll();
     }
 
-    public function getDescription(): string {
-        return $this->description;
+    public static function create($pdo, $name, $description = '') {
+        $stmt = $pdo->prepare("INSERT INTO Tag (name, description) VALUES (:name, :description)");
+        $stmt->execute(['name' => $name, 'description' => $description]);
+        return $pdo->lastInsertId();
     }
 
-    public function setDescription(string $description): void {
-        $this->description = $description;
-    }
-
-    public function getName(): string {
-        return $this->name;
-    }
-
-    public function setName(string $name): void {
-        $this->name = $name;
+    public static function getByName($pdo, $name) {
+        $stmt = $pdo->prepare("SELECT * FROM Tag WHERE name = :name");
+        $stmt->execute(['name' => $name]);
+        return $stmt->fetch();
     }
 }
-
 ?>

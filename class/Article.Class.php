@@ -76,7 +76,7 @@ class Article {
         $this->image = $image;
     }
 
-    public function save(PDO $pdo): void {
+    public function save($pdo) {
         $stmt = $pdo->prepare("INSERT INTO Article (name, content, id_theme, id_user, status, image) VALUES (:name, :content, :id_theme, :id_user, :status, :image)");
         $stmt->execute([
             'name' => $this->name,
@@ -86,6 +86,7 @@ class Article {
             'status' => $this->status,
             'image' => $this->image
         ]);
+        $this->id_article = $pdo->lastInsertId();
     }
 
     public static function getAll(PDO $pdo): array {
@@ -114,6 +115,24 @@ class Article {
         $stmt = $pdo->prepare("SELECT * FROM Article WHERE id_theme = :id_theme");
         $stmt->execute(['id_theme' => $id_theme]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function addTag($pdo, $tagId) {
+        // Vérifier si l'association existe déjà
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM Article_Tag WHERE id_tag = :id_tag AND id_article = :id_article");
+        $stmt->execute(['id_tag' => $tagId, 'id_article' => $this->id_article]);
+        $count = $stmt->fetchColumn();
+    
+        // Si l'association n'existe pas, l'ajouter
+        if ($count == 0) {
+            $stmt = $pdo->prepare("INSERT INTO Article_Tag (id_tag, id_article) VALUES (:id_tag, :id_article)");
+            $stmt->execute(['id_tag' => $tagId, 'id_article' => $this->id_article]);
+        }
+    }
+
+    public function getTags($pdo) {
+        $stmt = $pdo->prepare("SELECT Tag.* FROM Tag JOIN Article_Tag ON Tag.id_tag = Article_Tag.id_tag WHERE Article_Tag.id_article = :id_article");
+        $stmt->execute(['id_article' => $this->id_article]);
+        return $stmt->fetchAll();
     }
 }
 ?>
