@@ -3,6 +3,8 @@ require_once '../class/DatabaseConnection.php';
 require_once '../class/Theme.Class.php';
 require_once '../class/Article.Class.php';
 require_once '../class/Tag.Class.php';
+require_once '../class/Article_Tag.Class.php';
+
 $db = new Database();
 $pdo = $db->getConnection();
 
@@ -53,16 +55,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_article'])) {
     // Récupérer les tags
     if (isset($_POST['tags'])) {
         $tags = json_decode($_POST['tags'], true);
+
         foreach ($tags as $tagName) {
-            // Vérifier si le tag existe déjà
+            $tagName = trim($tagName); // Trim the tag name to avoid duplicates with spaces
+
+            // Check if the tag already exists in the database
             $tag = Tag::getByName($pdo, $tagName);
+
             if (!$tag) {
-                // Créer un nouveau tag
+                // If the tag doesn't exist, create it
                 $tagId = Tag::create($pdo, $tagName);
             } else {
+                // If the tag exists, use its ID
                 $tagId = $tag['id_tag'];
             }
-            // Associer le tag à l'article
+
+            // Associate the tag with the article
             $article->addTag($pdo, $tagId);
         }
     }
@@ -528,7 +536,7 @@ $themes = Theme::getAll($pdo);
                 if (e.key === 'Enter' || e.key === ',') {
                     e.preventDefault();
                     const tagText = tagsInput.value.trim();
-                    if (tagText !== '') {
+                    if (tagText !== '' && !isTagExists(tagText)) { // Check if the tag already exists
                         addTag(tagText);
                         tagsInput.value = '';
                     }
@@ -537,10 +545,8 @@ $themes = Theme::getAll($pdo);
 
             // Délégation d'événements pour la suppression des tags
             tagsList.addEventListener('click', function (e) {
-                // Vérifier si l'élément cliqué est un bouton de suppression
                 if (e.target.closest('.delete-tag')) {
-                    // Supprimer le tag parent
-                    const tag = e.target.closest('.tag'); // Assurez-vous que chaque tag a la classe "tag"
+                    const tag = e.target.closest('.tag');
                     if (tag) {
                         tag.remove();
                         updateHiddenTags();
@@ -567,6 +573,12 @@ $themes = Theme::getAll($pdo);
             function updateHiddenTags() {
                 const tags = Array.from(tagsList.children).map(tag => tag.textContent.trim());
                 hiddenTags.value = JSON.stringify(tags);
+            }
+
+            // Fonction pour vérifier si un tag existe déjà
+            function isTagExists(tagText) {
+                const tags = Array.from(tagsList.children).map(tag => tag.textContent.trim());
+                return tags.includes(tagText);
             }
         });
     </script>

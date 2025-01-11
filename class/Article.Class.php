@@ -1,4 +1,6 @@
 <?php
+require_once 'Article_Tag.Class.php';
+
 class Article {
     private int $id_article;
     private string $name;
@@ -32,51 +34,27 @@ class Article {
         return $this->name;
     }
 
-    public function setName(string $name): void {
-        $this->name = $name;
-    }
-
     public function getContent(): string {
         return $this->content;
-    }
-
-    public function setContent(string $content): void {
-        $this->content = $content;
     }
 
     public function getIdTheme(): int {
         return $this->id_theme;
     }
 
-    public function setIdTheme(int $id_theme): void {
-        $this->id_theme = $id_theme;
-    }
-
     public function getIdUser(): int {
         return $this->id_user;
-    }
-
-    public function setIdUser(int $id_user): void {
-        $this->id_user = $id_user;
     }
 
     public function getStatus(): string {
         return $this->status;
     }
 
-    public function setStatus(string $status): void {
-        $this->status = $status;
-    }
-
     public function getImage(): ?string {
         return $this->image;
     }
 
-    public function setImage(?string $image): void {
-        $this->image = $image;
-    }
-
-    public function save($pdo) {
+    public function save(PDO $pdo): void {
         $stmt = $pdo->prepare("INSERT INTO Article (name, content, id_theme, id_user, status, image) VALUES (:name, :content, :id_theme, :id_user, :status, :image)");
         $stmt->execute([
             'name' => $this->name,
@@ -87,11 +65,6 @@ class Article {
             'image' => $this->image
         ]);
         $this->id_article = $pdo->lastInsertId();
-    }
-
-    public static function getAll(PDO $pdo): array {
-        $stmt = $pdo->query("SELECT * FROM Article");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function delete(PDO $pdo, int $id): void {
@@ -111,28 +84,24 @@ class Article {
             'id' => $id
         ]);
     }
+
+    public static function getAll(PDO $pdo): array {
+        $stmt = $pdo->query("SELECT * FROM Article");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public static function getAllByTheme(PDO $pdo, int $id_theme): array {
         $stmt = $pdo->prepare("SELECT * FROM Article WHERE id_theme = :id_theme");
         $stmt->execute(['id_theme' => $id_theme]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    public function addTag($pdo, $tagId) {
-        // Vérifier si l'association existe déjà
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM Article_Tag WHERE id_tag = :id_tag AND id_article = :id_article");
-        $stmt->execute(['id_tag' => $tagId, 'id_article' => $this->id_article]);
-        $count = $stmt->fetchColumn();
-    
-        // Si l'association n'existe pas, l'ajouter
-        if ($count == 0) {
-            $stmt = $pdo->prepare("INSERT INTO Article_Tag (id_tag, id_article) VALUES (:id_tag, :id_article)");
-            $stmt->execute(['id_tag' => $tagId, 'id_article' => $this->id_article]);
-        }
+
+    public function addTag(PDO $pdo, int $tagId): void {
+        ArticleTag::addTagToArticle($pdo, $this->id_article, $tagId);
     }
 
-    public function getTags($pdo) {
-        $stmt = $pdo->prepare("SELECT Tag.* FROM Tag JOIN Article_Tag ON Tag.id_tag = Article_Tag.id_tag WHERE Article_Tag.id_article = :id_article");
-        $stmt->execute(['id_article' => $this->id_article]);
-        return $stmt->fetchAll();
+    public function getTags(PDO $pdo): array {
+        return ArticleTag::getTagsByArticle($pdo, $this->id_article);
     }
 }
 ?>
